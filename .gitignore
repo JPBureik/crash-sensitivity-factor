@@ -1,0 +1,69 @@
+
+---
+
+```gitignore
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.so
+*.pyd
+*.pyo
+*.pyd
+*.egg
+*.egg-info/
+.eggs/
+build/
+dist/
+pip-wheel-metadata/
+*.spec
+
+# Virtual envs
+.venv/
+venv/
+env/
+ENV/
+
+# Editors / IDEs
+.vscode/
+.idea/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Testing / coverage / lint
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.mypy_cache/
+.pytype/
+.ruff_cache/
+.tox/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Logs / caches
+*.log
+.cache/
+
+# Data & artifacts (keep a readme so the folder exists)
+data/**
+!data/README.md
+outputs/**
+results/**
+figures/**
+artifacts/**
+
+# Notebooks outputs (if you export)
+*.nbconvert.ipynb
+
+# Credentials / env
+.env
+.env.*
+*.key
+*.pem
+
+# PyProject build backend leftovers
+*.dist-info/
