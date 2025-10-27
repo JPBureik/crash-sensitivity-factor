@@ -43,6 +43,9 @@ where = ["src"]
 addopts = "-q --cov=crashload --cov-report=term-missing"
 testpaths = ["tests"]
 
+[tool.coverage.run]
+disable_warnings = ["module-not-measured"]
+
 [tool.mypy]
 mypy_path = "src"
 packages = ["crashload"]
