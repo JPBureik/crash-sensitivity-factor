@@ -55,6 +55,31 @@ Data is not provided. Place your inputs under `data/` (gitignored). See `data/RE
 
 ---
 
+## Data & Reproducibility
+
+**Universe.** S&P 500 **snapshot** (fixed membership) as of YYYY-MM-DD, stored at `data/universe/sp500_YYYY-MM-DD.csv`.  
+**Prices.** Daily **adjusted close** and **volume** data retrieved programmatically from Yahoo Finance via `yfinance`.  
+**Span.** 2004-01-01 → present (modern microstructure period; includes GFC, 2011, 2015–16, 2018, 2020, 2022).  
+**Rationale.** Large-cap, liquid, and widely covered universe — providing stable higher-order moment estimates and full reproducibility via included scripts.
+
+**Fair use.** This repository **does not redistribute** data. It only provides scripts to fetch data directly from the original sources; users download their own local copies.
+
+**Known limitation (v1.0).** Static membership ⇒ **survivorship bias** (delisted names omitted). The main output — a *market-level* crash-sensitivity or regime signal — is less affected by survivorship, but any cross-sectional backtests are labeled **illustrative**.  
+**Planned improvements.**  
+- **v1.1:** Monthly ETF holdings (SPY/IVV/VOO) as a rolling universe.  
+- **v2.0:** WRDS/CRSP constituents with delisted returns.
+
+**Reproduce the data locally**
+```bash
+# 1) Snapshot constituents (writes CSV under data/universe/)
+python scripts/get_sp500_tickers.py
+
+# 2) Download prices (Parquet files under data/prices/)
+python scripts/download_prices.py --universe_csv data/universe/sp500_YYYY-MM-DD.csv --start 2004-01-01
+ ```
+ 
+ ---
+
 ## Disclaimer
 For research/education. Not investment advice.
 
