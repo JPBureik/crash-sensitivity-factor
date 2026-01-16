@@ -36,6 +36,9 @@ dev = [
 [project.scripts]
 crashload = "crashload.run:main"
 
+[tool.setuptools]
+package-dir = {"" = "src"}
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
