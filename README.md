@@ -1,3 +1,5 @@
+[![CI](https://github.com/JPBureik/crash-sensitivity-factor/actions/workflows/ci.yml/badge.svg)](https://github.com/JPBureik/crash-sensitivity-factor/actions/workflows/ci.yml)
+
 # Crash-Sensitivity Factor (`crashload`)
 **Robust connected co-moment (3rd/4th-order) crash-sensitivity signal for S&P 500 equities.**
 
