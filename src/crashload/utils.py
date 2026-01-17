@@ -91,28 +91,49 @@ def winsorize_by_group(
 
 
 def robust_center(s: pd.Series) -> float:
-    """Median (robust mean)."""
-    return float(np.nanmedian(s.values))
+    """Median (robust mean) ignoring NaNs. Returns NaN if no finite values."""
+    arr = np.asarray(s.values, dtype=float)
+    arr = arr[np.isfinite(arr)]
+    if arr.size == 0:
+        return float("nan")
+    return float(np.median(arr))
 
 
 def robust_scale_mad(s: pd.Series) -> float:
     """
     Robust std estimate via MAD (scaled by 1.4826).
-    Returns 0.0 if all values equal.
+    Returns:
+      - NaN if no finite values
+      - 0.0 if all finite values are equal
     """
-    med = robust_center(s)
-    mad = np.nanmedian(np.abs(s.values - med))
-    return 1.4826 * float(mad)
+    arr = np.asarray(s.values, dtype=float)
+    arr = arr[np.isfinite(arr)]
+    if arr.size == 0:
+        return float("nan")
+    med = float(np.median(arr))
+    mad = float(np.median(np.abs(arr - med)))
+    return 1.4826 * mad
 
 
 def robust_zscore(s: pd.Series) -> pd.Series:
     """
-    Z-score using median/MAD. Returns zeros if scale==0.
+    Z-score using median/MAD.
+    - If all values are NaN: return all NaN (no spurious zeros).
+    - If scale==0: return zeros for finite entries and NaN where input is NaN.
     """
+    arr = np.asarray(s.values, dtype=float)
+    finite = np.isfinite(arr)
+    if not finite.any():
+        return pd.Series(np.nan, index=s.index, dtype=float)
+
     med = robust_center(s)
     scale = robust_scale_mad(s)
+
     if scale == 0 or not np.isfinite(scale):
-        return pd.Series(np.zeros(len(s), dtype=float), index=s.index)
+        out = pd.Series(np.zeros(len(s), dtype=float), index=s.index)
+        out[~finite] = np.nan
+        return out
+
     return (s - med) / scale
 
 

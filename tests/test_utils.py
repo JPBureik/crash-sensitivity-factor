@@ -154,3 +154,8 @@ def test_winsorize_series_invalid_quantiles_raises():
         winsorize_series(s, -0.1, 0.9)
     with pytest.raises(ValueError):
         winsorize_series(s, 0.1, 1.1)
+
+def test_robust_zscore_all_nan_returns_all_nan():
+    s = pd.Series([np.nan, np.nan, np.nan], dtype=float)
+    z = robust_zscore(s)
+    assert z.isna().all()
