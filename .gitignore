@@ -57,6 +57,9 @@ artifacts/**
 !data/universe/*.csv
 !data/universe/ATTRIBUTION.md
 
+# Example outputs
+examples/output/
+
 # Notebooks outputs
 *.nbconvert.ipynb
 
