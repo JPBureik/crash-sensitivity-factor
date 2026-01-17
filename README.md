@@ -100,6 +100,14 @@ Reproduce the test results via:
 pytest -q
 ```
 
+## Runnable example (no external data)
+
+```bash
+python examples/synthetic_demo.py
+```
+
+This generates synthetic daily returns, computes CLS at month-end, prints a small summary, and writes outputs to `examples/output/`.
+
  ---
 
  ## Roadmap
