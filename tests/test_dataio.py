@@ -7,11 +7,13 @@ from crashload.dataio import load_universe
 
 def test_load_universe_with_explicit_path_trims(tmp_path):
     p = tmp_path / "sp500_sample.csv"
-    df = pd.DataFrame({
-        "ticker": [" aapl  ", "MSFT "],
-        "name": [" Apple Inc. ", " Microsoft Corp "],
-        "sector": [" Information Technology ", "Information Technology"]
-    })
+    df = pd.DataFrame(
+        {
+            "ticker": [" aapl  ", "MSFT "],
+            "name": [" Apple Inc. ", " Microsoft Corp "],
+            "sector": [" Information Technology ", "Information Technology"],
+        }
+    )
     df.to_csv(p, index=False)
 
     out = load_universe(str(p))

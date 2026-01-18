@@ -1,16 +1,16 @@
 # src/crashload/utils.py
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 
-
 # ---------------------------
 # Date / stamping utilities
 # ---------------------------
+
 
 def coerce_date_series(dates: Iterable) -> pd.Series:
     """
@@ -42,7 +42,9 @@ def month_ends_from_returns(returns: pd.DataFrame, date_col: str = "date") -> pd
     return month_ends_from_dates(returns[date_col])
 
 
-def stamp_to_month_end(df: pd.DataFrame, date_col: str = "date", out_col: str = "month_end") -> pd.DataFrame:
+def stamp_to_month_end(
+    df: pd.DataFrame, date_col: str = "date", out_col: str = "month_end"
+) -> pd.DataFrame:
     """
     Add a `month_end` column equal to the last trading day of the month for each row’s date.
     """
@@ -56,6 +58,7 @@ def stamp_to_month_end(df: pd.DataFrame, date_col: str = "date", out_col: str = 
 # ---------------------------
 # Winsorization / robust stats
 # ---------------------------
+
 
 def winsorize_series(
     s: pd.Series,
@@ -83,9 +86,8 @@ def winsorize_by_group(
     Winsorize `value_col` within each group in `group_col`.
     """
     out = df.copy()
-    out[value_col] = (
-        out.groupby(group_col, sort=False)[value_col]
-        .transform(lambda s: winsorize_series(s, lower, upper))
+    out[value_col] = out.groupby(group_col, sort=False)[value_col].transform(
+        lambda s: winsorize_series(s, lower, upper)
     )
     return out
 
@@ -141,7 +143,10 @@ def robust_zscore(s: pd.Series) -> pd.Series:
 # Simple shrinkage helpers
 # ---------------------------
 
-def ridge_shrink(value: float, n_eff: float, tau: float = 100.0, target: float = 0.0) -> float:
+
+def ridge_shrink(
+    value: float, n_eff: float, tau: float = 100.0, target: float = 0.0
+) -> float:
     """
     Ridge-style shrink toward `target` with strength `tau` using n_eff effective obs.
     weight = n_eff / (n_eff + tau)
@@ -150,7 +155,9 @@ def ridge_shrink(value: float, n_eff: float, tau: float = 100.0, target: float =
     return float(w * value + (1 - w) * target)
 
 
-def shrink_by_tstat(value: float, se: float, t_cap: float = 3.0, target: float = 0.0) -> float:
+def shrink_by_tstat(
+    value: float, se: float, t_cap: float = 3.0, target: float = 0.0
+) -> float:
     """
     Shrink toward `target` so that |t| = |value/se| is capped by t_cap.
     If se<=0 or value==0, return target or value accordingly.
@@ -169,10 +176,12 @@ def shrink_by_tstat(value: float, se: float, t_cap: float = 3.0, target: float =
 # Misc small helpers
 # ---------------------------
 
+
 @dataclass(frozen=True)
 class WindowSpec:
     lookback_days: int
     min_obs: int = 250
+
 
 def valid_rolling_mask(dates: Iterable, min_obs: int) -> pd.Series:
     """

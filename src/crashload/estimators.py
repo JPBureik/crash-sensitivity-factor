@@ -1,28 +1,28 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd
 
 from .utils import (
-    winsorize_series,
-    robust_center,
-    robust_scale_mad,
-    robust_zscore,
     ridge_shrink,
+    robust_scale_mad,
+    winsorize_series,
 )
-
 
 # ----------------------------
 # Low-level joint cumulants
 # ----------------------------
 
+
 def _demean(a: pd.Series) -> pd.Series:
     return a - a.mean()
 
-def joint_cumulant3(x: pd.Series, y: pd.Series, z: pd.Series, center: bool = True) -> float:
+
+def joint_cumulant3(
+    x: pd.Series, y: pd.Series, z: pd.Series, center: bool = True
+) -> float:
     """
     κ(X,Y,Z) = E[XYZ] - E[X]E[YZ] - E[Y]E[XZ] - E[Z]E[XY] + 2 E[X]E[Y]E[Z].
     If center=True, uses centered variables so κ simplifies to E[x*y*z].
@@ -39,6 +39,7 @@ def joint_cumulant3(x: pd.Series, y: pd.Series, z: pd.Series, center: bool = Tru
     EXY, EXZ, EYZ = (X * Y).mean(), (X * Z).mean(), (Y * Z).mean()
     EXYZ = (X * Y * Z).mean()
     return float(EXYZ - EX * EYZ - EY * EXZ - EZ * EXY + 2 * EX * EY * EZ)
+
 
 def joint_cumulant4(
     a: pd.Series, b: pd.Series, c: pd.Series, d: pd.Series, center: bool = True
@@ -70,8 +71,12 @@ def joint_cumulant4(
     term -= E(A * B) * E(C * D)
     term -= E(A * C) * E(B * D)
     term -= E(A * D) * E(B * C)
-    term += 2 * (E(A) * E(B) * E(C * D) + E(A) * E(C) * E(B * D) + E(A) * E(D) * E(B * C))
-    term += 2 * (E(B) * E(C) * E(A * D) + E(B) * E(D) * E(A * C) + E(C) * E(D) * E(A * B))
+    term += 2 * (
+        E(A) * E(B) * E(C * D) + E(A) * E(C) * E(B * D) + E(A) * E(D) * E(B * C)
+    )
+    term += 2 * (
+        E(B) * E(C) * E(A * D) + E(B) * E(D) * E(A * C) + E(C) * E(D) * E(A * B)
+    )
     term -= 6 * E(A) * E(B) * E(C) * E(D)
     return float(term)
 
@@ -80,15 +85,18 @@ def joint_cumulant4(
 # Market-connected coskew/cokurt betas
 # --------------------------------------
 
+
 @dataclass(frozen=True)
 class CoMomentConfig:
-    winsor: float = 0.0          # e.g., 0.01 for 1% tails
-    robust_scale: bool = True    # scale series by MAD
-    shrink_tau: float = 0.0      # ridge shrink n/(n+tau)
-    use_centered: bool = True    # center before cumulants
+    winsor: float = 0.0  # e.g., 0.01 for 1% tails
+    robust_scale: bool = True  # scale series by MAD
+    shrink_tau: float = 0.0  # ridge shrink n/(n+tau)
+    use_centered: bool = True  # center before cumulants
 
 
-def _prep_pair(ri: pd.Series, rm: pd.Series, cfg: CoMomentConfig) -> Tuple[pd.Series, pd.Series]:
+def _prep_pair(
+    ri: pd.Series, rm: pd.Series, cfg: CoMomentConfig
+) -> tuple[pd.Series, pd.Series]:
     df = pd.concat([ri, rm], axis=1).dropna()
     if df.empty:
         return pd.Series(dtype=float), pd.Series(dtype=float)
@@ -115,7 +123,9 @@ def _prep_pair(ri: pd.Series, rm: pd.Series, cfg: CoMomentConfig) -> Tuple[pd.Se
     return x, m
 
 
-def coskew_beta(ri: pd.Series, rm: pd.Series, cfg: Optional[CoMomentConfig] = None) -> float:
+def coskew_beta(
+    ri: pd.Series, rm: pd.Series, cfg: CoMomentConfig | None = None
+) -> float:
     """
     β^(3) = κ(ri, rm, rm) / Var(rm)^(3/2).
     With centered variables, κ(ri, rm, rm) = E[ri * rm^2].
@@ -134,7 +144,9 @@ def coskew_beta(ri: pd.Series, rm: pd.Series, cfg: Optional[CoMomentConfig] = No
     return float(val)
 
 
-def cokurt_beta(ri: pd.Series, rm: pd.Series, cfg: Optional[CoMomentConfig] = None) -> float:
+def cokurt_beta(
+    ri: pd.Series, rm: pd.Series, cfg: CoMomentConfig | None = None
+) -> float:
     """
     β^(4) = κ(ri, rm, rm, rm) / Var(rm)^2.
     With centered variables, κ = E[ri * rm^3] - 3 E[ri*rm] E[rm^2].
@@ -158,13 +170,14 @@ def cokurt_beta(ri: pd.Series, rm: pd.Series, cfg: Optional[CoMomentConfig] = No
 # Rolling / panel helpers
 # --------------------------------------
 
+
 def rolling_beta_series(
     ri: pd.Series,
     rm: pd.Series,
     window: int = 504,
     min_obs: int = 252,
     which: str = "coskew",
-    cfg: Optional[CoMomentConfig] = None,
+    cfg: CoMomentConfig | None = None,
 ) -> pd.Series:
     """
     Rolling coskew/cokurt beta for a single asset vs market.
@@ -195,7 +208,7 @@ def panel_betas(
     window: int = 504,
     min_obs: int = 252,
     which: str = "coskew",
-    cfg: Optional[CoMomentConfig] = None,
+    cfg: CoMomentConfig | None = None,
 ) -> pd.DataFrame:
     """
     Compute rolling betas for each column in r against rm.
@@ -204,5 +217,7 @@ def panel_betas(
     cfg = cfg or CoMomentConfig()
     out = {}
     for col in r.columns:
-        out[col] = rolling_beta_series(r[col], rm, window, min_obs, which=which, cfg=cfg)
+        out[col] = rolling_beta_series(
+            r[col], rm, window, min_obs, which=which, cfg=cfg
+        )
     return pd.DataFrame(out, index=r.index)
