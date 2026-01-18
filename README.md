@@ -135,6 +135,8 @@ cls = cl.crash_score(
 | `crash_score(r, rm, window, ...)` | Full CLS computation |
 | `load_universe(path)` | Load S&P 500 universe CSV |
 
+> Full docstrings in source: `python -c "import crashload; help(crashload.crash_score)"`
+
 ---
 
 ## Data & Reproducibility
