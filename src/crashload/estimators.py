@@ -57,16 +57,18 @@ def joint_cumulant4(
     if df.empty:
         return np.nan
     A, B, C, D = (df.iloc[:, i] for i in range(4))
+
+    def E(s: pd.Series) -> float:
+        return float(s.mean())
+
     if center:
         A, B, C, D = (u - u.mean() for u in (A, B, C, D))
-        E = lambda s: s.mean()
         term = E(A * B * C * D)
         term -= E(A * B) * E(C * D)
         term -= E(A * C) * E(B * D)
         term -= E(A * D) * E(B * C)
-        return float(term)
+        return term
     # full formula
-    E = lambda s: s.mean()
     term = E(A * B * C * D)
     term -= E(A * B) * E(C * D)
     term -= E(A * C) * E(B * D)
@@ -78,7 +80,7 @@ def joint_cumulant4(
         E(B) * E(C) * E(A * D) + E(B) * E(D) * E(A * C) + E(C) * E(D) * E(A * B)
     )
     term -= 6 * E(A) * E(B) * E(C) * E(D)
-    return float(term)
+    return term
 
 
 # --------------------------------------

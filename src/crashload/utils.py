@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -12,7 +13,7 @@ import pandas as pd
 # ---------------------------
 
 
-def coerce_date_series(dates: Iterable) -> pd.Series:
+def coerce_date_series(dates: Iterable[Any]) -> pd.Series:
     """
     Return a Series of `datetime.date` (no tz) from many common inputs.
     """
@@ -23,7 +24,7 @@ def coerce_date_series(dates: Iterable) -> pd.Series:
     return s
 
 
-def month_ends_from_dates(dates: Iterable) -> pd.Series:
+def month_ends_from_dates(dates: Iterable[Any]) -> pd.Series:
     """
     Given a collection of trading dates, return the last trading date for each month
     (based on the provided dates, not a holiday calendar).
@@ -183,7 +184,7 @@ class WindowSpec:
     min_obs: int = 250
 
 
-def valid_rolling_mask(dates: Iterable, min_obs: int) -> pd.Series:
+def valid_rolling_mask(dates: Iterable[Any], min_obs: int) -> pd.Series:
     """
     Given a date series, return a boolean mask True where count up to that index >= min_obs.
     """

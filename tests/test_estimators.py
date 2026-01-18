@@ -80,7 +80,9 @@ def test_joint_cumulant4_center_true_and_general():
     d = pd.Series(rng.normal(size=500))
 
     # center=True: κ4 = E[abcd] - E[ab]E[cd] - E[ac]E[bd] - E[ad]E[bc]
-    E = lambda s: s.mean()
+    def E(s: pd.Series) -> float:
+        return float(s.mean())
+
     A, B, C, D = a - a.mean(), b - b.mean(), c - c.mean(), d - d.mean()
     expected_center = (
         E(A * B * C * D)
