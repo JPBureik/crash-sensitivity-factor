@@ -33,9 +33,6 @@ dev = [
   "pandas-stubs>=2.2.2.240909",
 ]
 
-[project.scripts]
-crashload = "crashload.run:main"
-
 [tool.setuptools]
 package-dir = {"" = "src"}
 
