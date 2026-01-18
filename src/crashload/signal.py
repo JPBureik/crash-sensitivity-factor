@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from .estimators import panel_betas, CoMomentConfig
+from .estimators import CoMomentConfig, panel_betas
 from .utils import robust_zscore
 
 
@@ -29,7 +29,7 @@ def crash_score(
     def z_xs(df: pd.DataFrame) -> pd.DataFrame:
         return df.apply(robust_zscore, axis=1)
 
-    z3 = z_xs(-beta3)          # negative coskew = worse in crashes
+    z3 = z_xs(-beta3)  # negative coskew = worse in crashes
     z4 = z_xs(beta4)
     cls = z3 + lambda_ * z4
 
