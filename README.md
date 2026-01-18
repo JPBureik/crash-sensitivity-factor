@@ -6,69 +6,134 @@
 [![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
 
 # Crash-Sensitivity Factor (`crashload`)
-**Robust connected co-moment (3rd/4th-order) crash-sensitivity signal for S&P 500 equities.**
 
-This repository implements a **crash-sensitivity factor** designed to quantify each stock’s tendency to suffer **disproportionate losses during market stress**.  
-The methodology uses **connected co-moments** (joint cumulants) — specifically **coskewness** (3rd order) and **cokurtosis** (4th order) with the market — with attention to **robust estimation and reproducible research practices** (frozen universe).
+A library for computing **crash-sensitivity signals** from higher-order co-moments between individual stocks and the market.
 
 ---
 
-## What is this?
-A compact, reproducible library (with an example workflow) to compute a **Crash Load Score (CLS)** that combines:
-- **Coskewness beta** (3rd order): does the stock underperform disproportionately on large **down** market days?
-- **Cokurtosis beta** (4th order): is the stock exposed to **tail-heavy** or **volatile market regimes** beyond normal conditions?
+## Methodology
 
-It includes robust preprocessing (winsorization, MAD scaling) and shrinkage, plus a tested API to compute rolling coskew/cokurt betas and a monthly CLS.
+### The Problem
+
+Standard beta (β) measures linear exposure to market returns, but says nothing about how a stock behaves during **extreme market moves**. Two stocks with identical betas can behave very differently in a crash.
+
+### The Solution: Higher-Order Co-Moments
+
+This library computes **coskewness** and **cokurtosis** betas that capture nonlinear crash exposure:
+
+**Coskewness Beta (β³)** — measures asymmetric downside exposure:
+
+```
+β³ = κ(rᵢ, rₘ, rₘ) / Var(rₘ)^(3/2)
+```
+
+where κ(rᵢ, rₘ, rₘ) is the third joint cumulant. With centered returns: `κ = E[rᵢ · rₘ²]`.
+
+- **β³ < 0**: Stock underperforms on large market moves (both up and down) → crash-sensitive
+- **β³ > 0**: Stock outperforms on large market moves → crash-resilient
+
+**Cokurtosis Beta (β⁴)** — measures tail-regime exposure:
+
+```
+β⁴ = κ(rᵢ, rₘ, rₘ, rₘ) / Var(rₘ)²
+```
+
+where κ is the fourth joint cumulant. With centered returns: `κ = E[rᵢ · rₘ³] − 3·E[rᵢ·rₘ]·E[rₘ²]`.
+
+- **β⁴ > 0**: Stock amplifies extreme market moves → high tail sensitivity
+- **β⁴ < 0**: Stock dampens extreme market moves → low tail sensitivity
+
+### Crash Load Score (CLS)
+
+The final signal combines both betas into a single cross-sectional score:
+
+```
+CLS = z(−β³) + λ · z(β⁴)
+```
+
+where z(·) is the cross-sectional robust z-score (median/MAD), and λ weights the kurtosis term (default 0.5).
+
+**Interpretation**: Higher CLS → more crash-sensitive. Useful for:
+- Risk monitoring (flag high-CLS positions)
+- Factor construction (long low-CLS, short high-CLS)
+- Regime analysis (track market-wide CLS distribution)
+
+### Robust Estimation
+
+Higher-order moments are notoriously noisy. This library applies:
+- **Winsorization**: Clip extreme returns (default: 1% tails)
+- **MAD scaling**: Normalize by median absolute deviation instead of std
+- **Ridge shrinkage**: Shrink betas toward zero based on sample size
 
 ---
 
-## API Overview
+## Quick Start
 
-- `coskew_beta`, `cokurt_beta`
-- `rolling_beta_series`, `panel_betas`
-- `crash_score` (CLS construction: `z(-β3) + λ z(β4)`)
-
----
-
-## Why it exists
-Higher-order moments are powerful but notoriously noisy. This project aims to show how a fragile statistical concept can be turned into a **stable, interpretable, and risk-aware factor** through reproducible code, careful preprocessing, and transparent validation.
-
----
-
-## Quick start (local dev)
 ```bash
-# Clone:
 git clone https://github.com/JPBureik/crash-sensitivity-factor.git
 cd crash-sensitivity-factor
-
-# (Optional) Create a virtual environment:
 python -m venv .venv && source .venv/bin/activate
-
-# Install in editable mode:
 pip install -e .
 ```
 
----
+### Run the Example (no external data needed)
 
-## Minimal usage
+```bash
+python examples/synthetic_demo.py
+```
+
+This generates synthetic returns with known crash profiles and computes CLS:
+
+```
+Computed CLS: 12 month-ends x 12 names
+Last month-end top 8 (higher = more crash/tail-sensitive):
+CRASHY_00    1.483
+CRASHY_01    1.347
+CRASHY_02    1.291
+...
+```
+
+The demo creates three stock types:
+- `NEUTRAL_*`: Linear market exposure only
+- `CRASHY_*`: Negative coskewness (underperform on large moves)
+- `TAIL_*`: Positive cokurtosis (amplify extreme moves)
+
+### With Your Own Data
+
 ```python
 import crashload as cl
 
-# r: DataFrame of daily returns (rows: dates, cols: tickers)
-# rm: Series of daily market returns aligned to r.index
-# Both should be de-duplicated, in UTC-close convention, etc.
+# r: DataFrame of daily returns (rows=dates, cols=tickers)
+# rm: Series of market returns (e.g., SPY), same index as r
 
-cfg = cl.CoMomentConfig(winsor=0.01, robust_scale=True, shrink_tau=100.0)
+cfg = cl.CoMomentConfig(
+    winsor=0.01,        # clip 1% tails
+    robust_scale=True,  # MAD normalization
+    shrink_tau=100.0,   # ridge shrinkage strength
+)
 
 cls = cl.crash_score(
     r, rm,
-    window=504, min_obs=252,
-    lambda_=0.5,
+    window=504,         # 2-year rolling window
+    min_obs=252,        # require 1 year minimum
+    lambda_=0.5,        # weight on β⁴ term
     cfg=cfg,
-    monthly=True,   # month-end stamps; set False for daily
+    monthly=True,       # resample to month-end
 )
 ```
-Data is not provided. Place your inputs under `data/` (gitignored). See `data/README.md` for expected formats.
+
+---
+
+## API Reference
+
+| Function | Description |
+|----------|-------------|
+| `coskew_beta(ri, rm, cfg)` | Single-stock β³ |
+| `cokurt_beta(ri, rm, cfg)` | Single-stock β⁴ |
+| `rolling_beta_series(ri, rm, window, ...)` | Rolling β³ or β⁴ for one stock |
+| `panel_betas(r, rm, window, ...)` | Rolling betas for all stocks |
+| `crash_score(r, rm, window, ...)` | Full CLS computation |
+| `load_universe(path)` | Load S&P 500 universe CSV |
 
 ---
 
@@ -90,43 +155,29 @@ Data is not provided. Place your inputs under `data/` (gitignored). See `data/RE
 - **v1.1:** Monthly ETF holdings (SPY/IVV/VOO) as a rolling universe.  
 - **v2.0:** WRDS/CRSP constituents with delisted returns.
 
-**Reproduce the data locally**
+**Reproduce the universe snapshot:**
 ```bash
-python scripts/get_sp500_tickers.py
-```
- 
- ---
-
- ## Validation
-
-Tests cover statistical sanity checks (Gaussian ≈ 0), shape/rolling invariants, and CLS monthly stamping.
-Reproduce the test results via:
-```bash
-pytest -q
+python scripts/get_sp500_tickers.py --out data/universe/sp500_$(date +%F).csv
 ```
 
-## Runnable example (no external data)
+---
+
+## Development
 
 ```bash
-python examples/synthetic_demo.py
+# Run tests
+pytest
+
+# Run linters
+ruff check src tests
+black --check src tests
+mypy
 ```
-
-This generates synthetic daily returns, computes CLS at month-end, prints a small summary, and writes outputs to `examples/output/`.
-
- ---
-
- ## Roadmap
-
-- Speed up panel_betas (vectorization/numba)
-- Add CLI example runner that reads parquet and writes CLS outputs
-- Add optional price ingestion helper
-
- ---
-
-## Disclaimer
-For research/education. Not investment advice.
 
 ---
 
 ## License
+
 MIT. See `LICENSE`.
+
+*For research/education only. Not investment advice.*
