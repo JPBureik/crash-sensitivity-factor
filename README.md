@@ -1,4 +1,9 @@
 [![CI](https://github.com/JPBureik/crash-sensitivity-factor/actions/workflows/ci.yml/badge.svg)](https://github.com/JPBureik/crash-sensitivity-factor/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/JPBureik/crash-sensitivity-factor/graph/badge.svg)](https://codecov.io/gh/JPBureik/crash-sensitivity-factor)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
 
 # Crash-Sensitivity Factor (`crashload`)
 **Robust connected co-moment (3rd/4th-order) crash-sensitivity signal for S&P 500 equities.**
